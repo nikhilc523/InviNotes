@@ -6,3 +6,7 @@ server/node_modules/
 data/
 .DS_Store
 *.log
+HANDOVER.md
+InVinotes.docx
+CLAUDE.md
+server/test-client.js
