@@ -1,0 +1,23 @@
+{
+  "name": "invinotes-server",
+  "version": "1.0.0",
+  "description": "InviNotes collaboration server (Yjs WebSocket)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "level": "^10.0.0",
+    "lib0": "^0.2.117",
+    "uuid": "^14.0.0",
+    "ws": "^8.20.0",
+    "y-protocols": "^1.0.7",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.30"
+  }
+}

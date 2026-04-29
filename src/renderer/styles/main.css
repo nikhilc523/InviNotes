@@ -1,0 +1,889 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI",
+    Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  color: rgba(255, 255, 255, 0.81);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(25, 25, 25, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ── Titlebar (Notion-style top bar) ── */
+#titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 12px 0 16px;
+  background: rgba(25, 25, 25, 0.98);
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#title {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+#titlebar-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+#click-through-badge {
+  background: rgba(35, 131, 226, 0.15);
+  color: rgb(35, 131, 226);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+#opacity-slider {
+  width: 50px;
+  height: 4px;
+  accent-color: rgb(35, 131, 226);
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+/* Connection status in titlebar */
+#connection-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 2px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.status-dot.connected {
+  background: #2ecc71;
+  box-shadow: 0 0 4px rgba(46, 204, 113, 0.4);
+}
+
+.status-dot.connecting {
+  background: #f39c12;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.status-dot.disconnected {
+  background: #eb5757;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+#status-text {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 12px;
+}
+
+/* Peer dots in titlebar */
+#peers {
+  display: flex;
+  align-items: center;
+  gap: -2px;
+  margin-right: 4px;
+}
+
+.peer-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #191919;
+  margin-left: -4px;
+}
+
+.peer-dot:first-child {
+  margin-left: 0;
+}
+
+/* Share button */
+.share-btn {
+  background: rgba(35, 131, 226, 0.12) !important;
+  border: 1px solid rgba(35, 131, 226, 0.2) !important;
+  color: rgb(35, 131, 226) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 4px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  width: auto !important;
+  height: auto !important;
+  transition: background 0.12s !important;
+  white-space: nowrap;
+}
+
+.share-btn:hover {
+  background: rgba(35, 131, 226, 0.2) !important;
+  color: rgb(55, 151, 246) !important;
+}
+
+.share-btn.active {
+  background: rgba(35, 131, 226, 0.25) !important;
+}
+
+/* Titlebar generic buttons (minimize, close) */
+#titlebar-controls > button:not(.share-btn) {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+
+#titlebar-controls > button:not(.share-btn):hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#btn-close:hover {
+  background: rgba(255, 60, 60, 0.15) !important;
+  color: #ff6b6b !important;
+}
+
+/* ── Share Dropdown (Notion-style) ── */
+#share-dropdown {
+  position: absolute;
+  top: 44px;
+  right: 12px;
+  width: 380px;
+  background: #252525;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  z-index: 900;
+  overflow: hidden;
+}
+
+#share-dropdown-inner {
+  padding: 0;
+}
+
+.share-section {
+  padding: 12px 16px;
+}
+
+.share-section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.share-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Join input row */
+.share-row {
+  display: flex;
+  gap: 8px;
+}
+
+#join-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.81);
+  font-size: 14px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+#join-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+#join-input:focus {
+  border-color: rgb(35, 131, 226);
+  box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.25);
+}
+
+.share-action-btn {
+  background: rgb(35, 131, 226);
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+
+.share-action-btn:hover {
+  background: rgb(0, 110, 210);
+}
+
+/* Create new room button */
+.share-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  padding: 8px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.share-create-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Peers list inside share dropdown */
+#share-peers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.share-peer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-radius: 6px;
+}
+
+.share-peer-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.share-peer-name {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.81);
+}
+
+.share-peer-you {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-left: auto;
+}
+
+.share-no-peers {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 4px;
+}
+
+/* Share footer */
+.share-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.share-room-id {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+}
+
+.share-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.share-footer-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.share-footer-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.share-footer-btn.danger {
+  color: rgba(235, 87, 87, 0.7);
+}
+
+.share-footer-btn.danger:hover {
+  background: rgba(235, 87, 87, 0.1);
+  color: rgba(235, 87, 87, 1);
+}
+
+/* Old room panel — hidden */
+#room-panel {
+  display: none;
+}
+
+/* ── Toolbar (hidden — using slash commands instead) ── */
+#toolbar {
+  display: none;
+}
+
+/* ── Editor ── */
+#editor-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+#editor {
+  min-height: 100%;
+  padding: 0 24px;
+}
+
+/* TipTap editor content — Notion style */
+.invinotes-editor {
+  padding: 12px 0 80px 0;
+  outline: none;
+  min-height: 100%;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.81);
+  caret-color: rgba(255, 255, 255, 0.81);
+}
+
+/* ── Page Title (first heading placeholder) ── */
+.invinotes-editor > .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Placeholder for empty paragraphs */
+.invinotes-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  height: 0;
+  font-size: 16px;
+}
+
+.invinotes-editor p {
+  margin: 1px 0;
+  padding: 3px 0;
+}
+
+/* ── Headings — Notion sizes & weights ── */
+.invinotes-editor h1 {
+  font-size: 1.875em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 2em;
+  margin-bottom: 4px;
+  padding: 3px 0;
+  line-height: 1.3;
+}
+
+.invinotes-editor h1:first-child {
+  margin-top: 0;
+}
+
+.invinotes-editor h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 1.4em;
+  margin-bottom: 1px;
+  padding: 3px 0;
+  line-height: 1.3;
+}
+
+.invinotes-editor h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 1em;
+  margin-bottom: 1px;
+  padding: 3px 0;
+  line-height: 1.3;
+}
+
+.invinotes-editor h4 {
+  font-size: 1em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 1em;
+  margin-bottom: 1px;
+  padding: 3px 0;
+  line-height: 1.3;
+}
+
+/* ── Inline formatting ── */
+.invinotes-editor strong {
+  font-weight: 600;
+}
+
+.invinotes-editor em {
+  font-style: italic;
+}
+
+.invinotes-editor s {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* ── Lists — Notion style ── */
+.invinotes-editor ul,
+.invinotes-editor ol {
+  padding-left: 1.5em;
+  margin: 1px 0;
+}
+
+.invinotes-editor li {
+  padding: 3px 0;
+}
+
+.invinotes-editor li p {
+  margin: 0;
+  padding: 0;
+}
+
+.invinotes-editor ul > li {
+  list-style-type: disc;
+}
+
+.invinotes-editor ul > li > ul > li {
+  list-style-type: circle;
+}
+
+.invinotes-editor ul > li > ul > li > ul > li {
+  list-style-type: square;
+}
+
+/* ── To-do / Task list — Notion checkboxes ── */
+.invinotes-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.invinotes-editor ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.invinotes-editor ul[data-type="taskList"] li > label {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.invinotes-editor ul[data-type="taskList"] li > label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  background: transparent;
+  transition: all 0.12s;
+}
+
+.invinotes-editor ul[data-type="taskList"] li > label input[type="checkbox"]:hover {
+  border-color: rgb(35, 131, 226);
+  background: rgba(35, 131, 226, 0.08);
+}
+
+.invinotes-editor ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background: rgb(35, 131, 226);
+  border-color: rgb(35, 131, 226);
+}
+
+.invinotes-editor ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 6px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.invinotes-editor ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.invinotes-editor ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+/* ── Blockquote — Notion style ── */
+.invinotes-editor blockquote {
+  border-left: 3px solid rgba(255, 255, 255, 0.4);
+  padding-left: 14px;
+  margin: 4px 0;
+  color: rgba(255, 255, 255, 0.81);
+}
+
+/* ── Divider ── */
+.invinotes-editor hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.094);
+  margin: 8px 0;
+}
+
+/* ── Inline code — Notion style ── */
+.invinotes-editor code {
+  background: rgba(135, 131, 120, 0.15);
+  color: #eb5757;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
+  font-size: 85%;
+}
+
+/* ── Code block — Notion dark style ── */
+.invinotes-editor pre {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  padding: 32px 16px 32px 16px;
+  margin: 4px 0;
+  overflow-x: auto;
+  font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
+  tab-size: 2;
+}
+
+.invinotes-editor pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Syntax highlighting (Notion-ish dark) ── */
+.hljs-keyword { color: #c678dd; }
+.hljs-string { color: #98c379; }
+.hljs-number { color: #d19a66; }
+.hljs-comment { color: rgba(255, 255, 255, 0.35); font-style: italic; }
+.hljs-function { color: #61afef; }
+.hljs-title { color: #61afef; }
+.hljs-params { color: rgba(255, 255, 255, 0.75); }
+.hljs-built_in { color: #e5c07b; }
+.hljs-attr { color: #e5c07b; }
+.hljs-variable { color: #e06c75; }
+.hljs-type { color: #e5c07b; }
+.hljs-meta { color: #56b6c2; }
+.hljs-tag { color: #e06c75; }
+.hljs-name { color: #e06c75; }
+.hljs-attribute { color: #c678dd; }
+.hljs-selector-class { color: #e5c07b; }
+.hljs-selector-id { color: #61afef; }
+.hljs-selector-tag { color: #e06c75; }
+
+/* ── Toggle list (details/summary) ── */
+.invinotes-editor details {
+  margin: 1px 0;
+  padding: 3px 0;
+}
+
+.invinotes-editor details summary {
+  cursor: pointer;
+  padding: 3px 0;
+  color: rgba(255, 255, 255, 0.81);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.invinotes-editor details summary::before {
+  content: '▶';
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 0.12s;
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.invinotes-editor details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.invinotes-editor details > div {
+  padding-left: 24px;
+}
+
+/* ── Collaboration Cursors ── */
+.collaboration-cursor__caret {
+  border-left: 2px solid;
+  border-right: none;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
+  position: relative;
+  word-break: normal;
+}
+
+.collaboration-cursor__label {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 1px 5px;
+  border-radius: 3px 3px 3px 0;
+  white-space: nowrap;
+  color: #fff;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Slash Command Menu ── */
+#slash-menu {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  min-width: 324px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #252525;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  padding: 6px 0;
+}
+
+#slash-menu.visible {
+  display: block;
+}
+
+#slash-menu .slash-menu-section {
+  padding: 6px 14px 6px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+#slash-menu .slash-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: background 0.06s;
+  gap: 12px;
+  min-height: 36px;
+}
+
+#slash-menu .slash-menu-item:hover,
+#slash-menu .slash-menu-item.selected {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+#slash-menu .slash-menu-item .slash-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#slash-menu .slash-menu-item .slash-icon.text-icon {
+  font-size: 16px;
+  font-weight: 400;
+  font-family: Georgia, serif;
+}
+
+#slash-menu .slash-menu-item .slash-label {
+  flex: 1;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.81);
+}
+
+#slash-menu .slash-menu-item .slash-shortcut {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+#slash-menu .slash-menu-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+#slash-menu .slash-menu-footer:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+#slash-menu .slash-menu-footer .slash-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+#slash-menu .slash-menu-footer .slash-shortcut {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+/* ── Scrollbar — Notion style ── */
+#editor-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+#editor-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#editor-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+#editor-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#slash-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+#slash-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#slash-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+/* ── Utility ── */
+.hidden {
+  display: none !important;
+}
+
+/* Selection — Notion blue */
+.invinotes-editor ::selection {
+  background: rgba(35, 131, 226, 0.28);
+}
+
+/* ── Banners ── */
+.app-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.app-banner.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+.app-banner.tip {
+  background: rgba(35, 131, 226, 0.08);
+  color: rgb(35, 131, 226);
+}
+.banner-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.7;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.banner-dismiss:hover {
+  opacity: 1;
+}
