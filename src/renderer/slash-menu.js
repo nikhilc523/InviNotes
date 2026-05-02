@@ -14,6 +14,7 @@ const BLOCK_ITEMS = [
   { id: 'blockquote',    label: 'Quote',            icon: '\u201C', iconClass: '',           shortcut: '>',    section: 'Basic blocks' },
   { id: 'codeBlock',     label: 'Code',             icon: '</>',   iconClass: '',            shortcut: '```',  section: 'Basic blocks' },
   { id: 'divider',       label: 'Divider',          icon: '\u2014', iconClass: '',           shortcut: '---',  section: 'Basic blocks' },
+  { id: 'image',         label: 'Image',            icon: '\u{1F5BC}', iconClass: '',        shortcut: '',     section: 'Media' },
 ];
 
 export class SlashMenu {
@@ -187,6 +188,22 @@ export class SlashMenu {
     }
   }
 
+  _pickAndInsertImage(editor) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.chain().focus().setImage({ src: reader.result }).run();
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
   _executeItem(item) {
     const editor = this.getEditor();
     if (!editor || !item) return;
@@ -234,6 +251,9 @@ export class SlashMenu {
         break;
       case 'divider':
         editor.chain().focus().setHorizontalRule().run();
+        break;
+      case 'image':
+        this._pickAndInsertImage(editor);
         break;
     }
 

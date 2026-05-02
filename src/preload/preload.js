@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld('inviNotes', {
   close: () => ipcRenderer.send('window-close'),
   setOpacity: (value) => ipcRenderer.send('set-opacity', value),
 
+  // Click-through: renderer tells main to temporarily pause/resume
+  setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options || {}),
+
   // Events from main process
   onClickThroughChanged: (callback) => {
     ipcRenderer.on('click-through-changed', (_event, enabled) => callback(enabled));
@@ -14,6 +17,11 @@ contextBridge.exposeInMainWorld('inviNotes', {
   // Deep link: main process forwards room ID when app is opened via invinotes://join/<roomId>
   onJoinRoom: (callback) => {
     ipcRenderer.on('join-room', (_event, roomId) => callback(roomId));
+  },
+
+  // Opacity sync (when changed via global shortcut)
+  onOpacityChanged: (callback) => {
+    ipcRenderer.on('opacity-changed', (_event, value) => callback(value));
   },
 
   // Platform warnings and tips

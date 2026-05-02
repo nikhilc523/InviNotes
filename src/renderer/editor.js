@@ -5,6 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Collaboration from '@tiptap/extension-collaboration';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import Image from '@tiptap/extension-image';
 import { yCursorPlugin } from '@tiptap/y-tiptap';
 import { common, createLowlight } from 'lowlight';
 
@@ -54,6 +55,7 @@ function getBaseExtensions() {
     CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'javascript' }),
     TaskList,
     TaskItem.configure({ nested: true }),
+    Image.configure({ inline: false, allowBase64: true }),
     Placeholder.configure({
       placeholder: ({ node, editor }) => {
         if (node.type.name === 'heading') {

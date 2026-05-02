@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, nativeImage, screen } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const os = require('os');
@@ -8,6 +8,11 @@ app.setName('InviNotes');
 let mainWindow;
 let clickThrough = false;
 let pendingDeepLink = null; // store deep link if window isn't ready yet
+
+const MOVE_STEP = 50;
+const RESIZE_STEP = 50;
+const OPACITY_STEP = 0.05;
+const MIN_SIZE = { width: 300, height: 200 };
 
 const WINDOW_CONFIG = {
   width: 750,
@@ -84,9 +89,9 @@ function createWindow() {
 }
 
 function registerGlobalShortcuts() {
+  // Toggle visibility
   globalShortcut.register('CommandOrControl+Shift+N', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-
     if (mainWindow.isVisible()) {
       mainWindow.hide();
     } else {
@@ -95,13 +100,95 @@ function registerGlobalShortcuts() {
     }
   });
 
+  // Toggle click-through (fully undetectable — no cursor change, no interaction)
   globalShortcut.register('CommandOrControl+Shift+M', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-
     clickThrough = !clickThrough;
-    mainWindow.setIgnoreMouseEvents(clickThrough, { forward: true });
+    console.log('[InviNotes] Click-through toggled:', clickThrough);
+    if (clickThrough) {
+      mainWindow.setIgnoreMouseEvents(true);
+    } else {
+      mainWindow.setIgnoreMouseEvents(false);
+    }
     mainWindow.webContents.send('click-through-changed', clickThrough);
   });
+
+  // Move window — Ctrl+Option+Arrows (safe on macOS, no system conflicts)
+  globalShortcut.register('Control+Alt+Left', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [x, y] = mainWindow.getPosition();
+    mainWindow.setPosition(x - MOVE_STEP, y);
+  });
+  globalShortcut.register('Control+Alt+Right', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [x, y] = mainWindow.getPosition();
+    mainWindow.setPosition(x + MOVE_STEP, y);
+  });
+  globalShortcut.register('Control+Alt+Up', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [x, y] = mainWindow.getPosition();
+    mainWindow.setPosition(x, y - MOVE_STEP);
+  });
+  globalShortcut.register('Control+Alt+Down', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [x, y] = mainWindow.getPosition();
+    mainWindow.setPosition(x, y + MOVE_STEP);
+  });
+
+  // Resize window
+  globalShortcut.register('CommandOrControl+Shift+=', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [w, h] = mainWindow.getSize();
+    mainWindow.setSize(w + RESIZE_STEP, h + RESIZE_STEP);
+  });
+  globalShortcut.register('CommandOrControl+Shift+-', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [w, h] = mainWindow.getSize();
+    mainWindow.setSize(
+      Math.max(MIN_SIZE.width, w - RESIZE_STEP),
+      Math.max(MIN_SIZE.height, h - RESIZE_STEP)
+    );
+  });
+
+  // Opacity up / down
+  globalShortcut.register('CommandOrControl+Shift+]', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const current = mainWindow.getOpacity();
+    const next = Math.min(1, current + OPACITY_STEP);
+    mainWindow.setOpacity(next);
+    mainWindow.webContents.send('opacity-changed', Math.round(next * 100));
+  });
+  globalShortcut.register('CommandOrControl+Shift+[', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const current = mainWindow.getOpacity();
+    const next = Math.max(0.1, current - OPACITY_STEP);
+    mainWindow.setOpacity(next);
+    mainWindow.webContents.send('opacity-changed', Math.round(next * 100));
+  });
+
+  // Snap window (Ctrl+Option+Shift — no macOS conflicts)
+  // Arrows point toward the corner direction
+  globalShortcut.register('Control+Alt+Shift+Up', () => snapToCorner('top-left'));
+  globalShortcut.register('Control+Alt+Shift+Right', () => snapToCorner('top-right'));
+  globalShortcut.register('Control+Alt+Shift+Down', () => snapToCorner('bottom-right'));
+  globalShortcut.register('Control+Alt+Shift+Left', () => snapToCorner('bottom-left'));
+  globalShortcut.register('Control+Alt+Shift+C', () => snapToCorner('center'));
+}
+
+function snapToCorner(position) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const display = screen.getDisplayMatching(mainWindow.getBounds());
+  const { x, y, width, height } = display.workArea;
+  const [w, h] = mainWindow.getSize();
+  const pad = 20;
+
+  switch (position) {
+    case 'top-left':     mainWindow.setPosition(x + pad, y + pad); break;
+    case 'top-right':    mainWindow.setPosition(x + width - w - pad, y + pad); break;
+    case 'bottom-left':  mainWindow.setPosition(x + pad, y + height - h - pad); break;
+    case 'bottom-right': mainWindow.setPosition(x + width - w - pad, y + height - h - pad); break;
+    case 'center':       mainWindow.setPosition(x + Math.round((width - w) / 2), y + Math.round((height - h) / 2)); break;
+  }
 }
 
 // ── Deep Link Protocol ──
@@ -164,6 +251,13 @@ ipcMain.on('window-close', () => {
 ipcMain.on('set-opacity', (_event, value) => {
   if (mainWindow && typeof value === 'number') {
     mainWindow.setOpacity(Math.max(0.1, Math.min(1, value)));
+  }
+});
+
+// Dynamic click-through (kept for future use, e.g. hover-to-interact)
+ipcMain.on('set-ignore-mouse-events', (_event, ignore, options) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setIgnoreMouseEvents(ignore, options);
   }
 });
 

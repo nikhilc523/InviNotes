@@ -651,6 +651,21 @@ html, body {
 .hljs-selector-id { color: #61afef; }
 .hljs-selector-tag { color: #e06c75; }
 
+/* ── Images ── */
+.invinotes-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 8px 0;
+  display: block;
+  cursor: default;
+}
+
+.invinotes-editor img.ProseMirror-selectednode {
+  outline: 2px solid rgb(35, 131, 226);
+  outline-offset: 2px;
+}
+
 /* ── Toggle list (details/summary) ── */
 .invinotes-editor details {
   margin: 1px 0;
@@ -841,6 +856,89 @@ html, body {
 }
 
 #slash-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+/* ── Shortcuts Panel ── */
+#shortcuts-panel {
+  position: absolute;
+  top: 44px;
+  right: 12px;
+  width: 380px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  background: #252525;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  z-index: 950;
+  padding: 0;
+}
+
+.shortcuts-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shortcuts-grid {
+  padding: 8px 0;
+}
+
+.shortcut-group {
+  padding: 4px 16px 8px;
+}
+
+.shortcut-group-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 0 4px;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.shortcut-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.shortcut-row kbd,
+.shortcuts-footer kbd {
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.shortcuts-footer {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#shortcuts-panel::-webkit-scrollbar {
+  width: 4px;
+}
+#shortcuts-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+#shortcuts-panel::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
 }

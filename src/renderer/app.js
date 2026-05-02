@@ -129,6 +129,7 @@ function initCollabEditor() {
 function bindEditor() {
   bindToolbar();
   bindSlashCommands();
+  bindImageHandlers();
 }
 
 // ── Slash command detection ──
@@ -169,6 +170,44 @@ function bindSlashCommands() {
           slashMenu.open(slashPos, coords);
         }
       }, 0);
+    }
+  });
+}
+
+// ── Image paste & drag-drop ──
+function insertImageFile(file) {
+  if (!file.type.startsWith('image/') || !editor) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    editor.chain().focus().setImage({ src: reader.result }).run();
+  };
+  reader.readAsDataURL(file);
+}
+
+function bindImageHandlers() {
+  const editorEl = editor.view.dom;
+
+  editorEl.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        insertImageFile(item.getAsFile());
+        return;
+      }
+    }
+  });
+
+  editorEl.addEventListener('drop', (e) => {
+    const files = e.dataTransfer?.files;
+    if (!files?.length) return;
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        e.preventDefault();
+        insertImageFile(file);
+        return;
+      }
     }
   });
 }
@@ -348,9 +387,55 @@ opacitySlider.addEventListener('input', (e) => {
 });
 
 const badge = document.getElementById('click-through-badge');
+let clickThroughEnabled = false;
+
 window.inviNotes.onClickThroughChanged((enabled) => {
+  clickThroughEnabled = enabled;
   badge.classList.toggle('hidden', !enabled);
 });
+
+// ── Click-through mode ──
+// When enabled, the window is fully click-through — mouse events pass to apps
+// behind. No cursor change, no interaction. Toggle with Cmd+Shift+M.
+// The main process handles setIgnoreMouseEvents; the renderer just shows the badge.
+
+// ── Shortcuts panel toggle ──
+const shortcutsBtn = document.getElementById('btn-shortcuts');
+const shortcutsPanel = document.getElementById('shortcuts-panel');
+
+shortcutsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isOpen = !shortcutsPanel.classList.contains('hidden');
+  if (isOpen) {
+    closeShortcutsPanel();
+  } else {
+    openShortcutsPanel();
+  }
+});
+
+function openShortcutsPanel() {
+  closeShareDropdown();
+  shortcutsPanel.classList.remove('hidden');
+  setTimeout(() => document.addEventListener('click', onShortcutsOutsideClick), 0);
+}
+
+function closeShortcutsPanel() {
+  shortcutsPanel.classList.add('hidden');
+  document.removeEventListener('click', onShortcutsOutsideClick);
+}
+
+function onShortcutsOutsideClick(e) {
+  if (!shortcutsPanel.contains(e.target) && e.target !== shortcutsBtn && !shortcutsBtn.contains(e.target)) {
+    closeShortcutsPanel();
+  }
+}
+
+// ── Opacity sync from global shortcuts ──
+if (window.inviNotes.onOpacityChanged) {
+  window.inviNotes.onOpacityChanged((value) => {
+    opacitySlider.value = value;
+  });
+}
 
 // ── Platform Warnings & Tips ──
 function showBanner(message, level, dismissKey) {

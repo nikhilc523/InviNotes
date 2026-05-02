@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InviNotes — Invisible Notes for Screen Sharing</title>
+  <meta name="description" content="A desktop app that's invisible to screen share. Collaborate on notes in real time while on Zoom, Meet, or Teams — only you see them.">
+  <meta property="og:title" content="InviNotes — Invisible Notes for Screen Sharing">
+  <meta property="og:description" content="Take collaborative notes that are invisible to Zoom, Meet, Teams, and OBS. Real-time editing with live cursors.">
+  <meta property="og:image" content="icon-512.png">
+  <link rel="icon" type="image/png" href="icon-512.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ═══════ HERO ═══════ -->
+  <section id="hero">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-icon-wrapper" id="hero-icon-wrapper">
+      <div class="hero-icon-glow"></div>
+      <div class="hero-icon-container" id="hero-icon-container">
+        <img src="icon-hero.svg" alt="InviNotes icon" class="hero-cube-icon" />
+      </div>
+      <div class="hero-icon-reflection">
+        <img src="icon-hero.svg" alt="" class="hero-cube-icon" aria-hidden="true" />
+      </div>
+    </div>
+    <div class="hero-content">
+      <h1>InviNotes</h1>
+      <p class="tagline">Invisible notes for screen sharing.<br>Collaborate in plain sight.</p>
+      <a href="https://github.com/nikhilc523/InviNotes/releases/latest/download/InviNotes-1.0.0-arm64.dmg" class="download-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for macOS
+      </a>
+      <p class="download-sub">Apple Silicon (.dmg) &middot; Free &amp; open source</p>
+    </div>
+    <div class="scroll-hint">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M5 11l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </section>
+
+  <!-- ═══════ INTERACTIVE DEMO ═══════ -->
+  <section id="demo">
+    <div class="section-inner">
+      <h2>See it in action</h2>
+      <p class="section-desc">
+        InviNotes sits on top of your screen but is <strong>completely invisible</strong> to
+        screen share. Toggle between views to see the difference.
+      </p>
+
+      <!-- View toggle -->
+      <div class="demo-toggle">
+        <button class="toggle-btn active" data-view="yours">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Your screen
+        </button>
+        <button class="toggle-btn" data-view="theirs">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Their screen share
+        </button>
+      </div>
+
+      <!-- Desktop scene -->
+      <div class="desktop-scene" id="desktop-scene">
+        <!-- macOS-style wallpaper background -->
+        <div class="desktop-wallpaper">
+          <!-- Fake background app: a code editor -->
+          <div class="bg-app">
+            <div class="bg-app-titlebar">
+              <span class="dot-group">
+                <span class="wdot red"></span>
+                <span class="wdot yellow"></span>
+                <span class="wdot green"></span>
+              </span>
+              <span class="bg-app-title">VS Code &mdash; project.js</span>
+            </div>
+            <div class="bg-app-body">
+              <div class="code-line"><span class="kw">const</span> <span class="var">app</span> = <span class="fn">express</span>();</div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="kw">app</span>.<span class="fn">get</span>(<span class="str">'/api/users'</span>, <span class="kw">async</span> (<span class="var">req</span>, <span class="var">res</span>) =&gt; {</div>
+              <div class="code-line">&nbsp;&nbsp;<span class="kw">const</span> <span class="var">users</span> = <span class="kw">await</span> <span class="fn">db</span>.<span class="fn">query</span>(<span class="str">'SELECT * FROM users'</span>);</div>
+              <div class="code-line">&nbsp;&nbsp;<span class="var">res</span>.<span class="fn">json</span>(<span class="var">users</span>);</div>
+              <div class="code-line">});</div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="kw">app</span>.<span class="fn">listen</span>(<span class="num">3000</span>);</div>
+            </div>
+          </div>
+
+          <!-- InviNotes window overlay -->
+          <div class="invi-window" id="invi-window">
+            <div class="invi-titlebar">
+              <span class="invi-title">InviNotes</span>
+              <div class="invi-controls">
+                <span class="invi-slider"></span>
+                <span class="invi-status-dot"></span>
+                <span class="invi-status-text">Connected</span>
+                <span class="invi-peer" style="background:#e06c75"></span>
+                <span class="invi-peer" style="background:#61afef; margin-left:-5px"></span>
+                <span class="invi-share-btn">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M13 5.5V11a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Share
+                </span>
+                <span class="invi-btn">&ndash;</span>
+                <span class="invi-btn">&times;</span>
+              </div>
+            </div>
+            <div class="invi-editor">
+              <div class="invi-h1">Sprint Planning Notes</div>
+              <div class="invi-p">Discussed the auth migration timeline. Key points:</div>
+              <div class="invi-li"><span class="invi-bullet"></span>Move to JWT by March 15</div>
+              <div class="invi-li"><span class="invi-bullet"></span>Backend team handles token refresh</div>
+              <div class="invi-li"><span class="invi-bullet"></span>Frontend needs new login flow</div>
+              <div class="invi-p"></div>
+              <div class="invi-task"><span class="invi-checkbox checked"></span><span class="invi-task-done">Set up staging environment</span></div>
+              <div class="invi-task"><span class="invi-checkbox"></span>Write migration script</div>
+              <div class="invi-task"><span class="invi-checkbox"></span>Update API documentation</div>
+              <div class="invi-p"></div>
+              <div class="invi-code">
+                <span class="kw">const</span> <span class="var">token</span> = <span class="fn">jwt</span>.<span class="fn">sign</span>({ <span class="var">userId</span> }, <span class="var">secret</span>);
+              </div>
+              <div class="invi-cursor">
+                <span class="cursor-caret" style="border-color:#e06c75"></span>
+                <span class="cursor-label" style="background:#e06c75">Swift Fox</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Invisible overlay label -->
+        <div class="demo-label" id="demo-label-yours">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          You see InviNotes — they don't
+        </div>
+        <div class="demo-label demo-label-hidden" id="demo-label-theirs">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"/></svg>
+          InviNotes is invisible to screen share
+        </div>
+
+        <!-- macOS dock -->
+        <div class="dock">
+          <div class="dock-icon" title="Finder">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 8v8M15 8v8"/></svg>
+          </div>
+          <div class="dock-icon" title="Safari">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          </div>
+          <div class="dock-icon" title="VS Code">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(100,149,237,0.7)" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="dock-icon" title="Zoom">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(45,140,255,0.7)" stroke-width="1.5"><rect x="2" y="6" width="15" height="12" rx="2"/><polygon points="23 7 17 12 23 17 23 7"/></svg>
+          </div>
+          <div class="dock-separator"></div>
+          <div class="dock-detail" id="dock-detail">
+            <span class="dock-detail-label">InviNotes hides from the Dock</span>
+            <span class="dock-detail-sublabel">LSUIElement &mdash; no icon in taskbar or Cmd+Tab</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ TRY IT ═══════ -->
+  <section id="try-it">
+    <div class="section-inner">
+      <h2>Total control over your window</h2>
+      <p class="section-desc">Adjust opacity, resize, and toggle click-through — all while staying invisible to screen share.</p>
+
+      <!-- Unified laptop demo with integrated controls -->
+      <div class="tryit-demo">
+        <!-- Mode toggle strip (attached to top of laptop) -->
+        <div class="tryit-modes" id="tryit-modes">
+          <button class="tryit-mode active" data-mode="normal" id="tryit-mode-normal">
+            <span class="tryit-mode-dot tryit-dot-off"></span>
+            Click-through OFF
+          </button>
+          <button class="tryit-mode" data-mode="clickthrough" id="tryit-mode-ct">
+            <span class="tryit-mode-dot tryit-dot-on"></span>
+            Click-through ON
+          </button>
+          <div class="tryit-opacity">
+            <label>Opacity</label>
+            <input type="range" id="try-opacity" min="15" max="100" value="95" step="5">
+          </div>
+        </div>
+
+        <!-- Laptop frame -->
+        <div class="laptop">
+          <div class="laptop-screen">
+            <div class="laptop-desktop" id="laptop-desktop">
+              <!-- Background: VS Code -->
+              <div class="lbg-app">
+                <div class="lbg-bar">
+                  <span class="dot-group"><span class="wdot red"></span><span class="wdot yellow"></span><span class="wdot green"></span></span>
+                  <span class="lbg-title">VS Code &mdash; server.js</span>
+                  <div class="lbg-actions">
+                    <button class="lbg-btn" data-name="Run">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      Run
+                    </button>
+                    <button class="lbg-btn" data-name="Debug">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+                      Debug
+                    </button>
+                    <button class="lbg-btn" data-name="Terminal">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                      Terminal
+                    </button>
+                  </div>
+                </div>
+                <div class="lbg-body">
+                  <div class="lbg-line"><span class="kw">import</span> <span class="var">express</span> <span class="kw">from</span> <span class="str">'express'</span>;</div>
+                  <div class="lbg-line"><span class="kw">import</span> { <span class="var">WebSocketServer</span> } <span class="kw">from</span> <span class="str">'ws'</span>;</div>
+                  <div class="lbg-line"></div>
+                  <div class="lbg-line"><span class="kw">const</span> <span class="var">app</span> = <span class="fn">express</span>();</div>
+                  <div class="lbg-line"><span class="kw">const</span> <span class="var">wss</span> = <span class="kw">new</span> <span class="fn">WebSocketServer</span>({ <span class="var">port</span>: <span class="num">1234</span> });</div>
+                  <div class="lbg-line"></div>
+                  <div class="lbg-line"><span class="var">wss</span>.<span class="fn">on</span>(<span class="str">'connection'</span>, (<span class="var">ws</span>) =&gt; {</div>
+                  <div class="lbg-line">&nbsp;&nbsp;<span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Client connected'</span>);</div>
+                  <div class="lbg-line">&nbsp;&nbsp;<span class="var">ws</span>.<span class="fn">on</span>(<span class="str">'message'</span>, (<span class="var">data</span>) =&gt; {</div>
+                  <div class="lbg-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">wss</span>.<span class="var">clients</span>.<span class="fn">forEach</span>(<span class="var">c</span> =&gt; <span class="var">c</span>.<span class="fn">send</span>(<span class="var">data</span>));</div>
+                  <div class="lbg-line">&nbsp;&nbsp;});</div>
+                  <div class="lbg-line">});</div>
+                  <div class="lbg-line"></div>
+                  <div class="lbg-line"><span class="var">app</span>.<span class="fn">listen</span>(<span class="num">3000</span>, () =&gt; {</div>
+                  <div class="lbg-line">&nbsp;&nbsp;<span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Server running'</span>);</div>
+                  <div class="lbg-line">});</div>
+                </div>
+                <div class="lbg-toast hidden" id="lbg-toast"></div>
+              </div>
+
+              <!-- InviNotes overlay window -->
+              <div class="lnotes" id="lnotes">
+                <div class="lnotes-bar" id="lnotes-drag-handle">
+                  <span class="lnotes-title">InviNotes</span>
+                  <div class="lnotes-right">
+                    <span class="lnotes-status"></span>
+                    <span class="lnotes-ct-badge hidden" id="lnotes-ct-badge">Click-through</span>
+                    <span class="lnotes-share">Share</span>
+                    <span class="lnotes-btn">&ndash;</span>
+                    <span class="lnotes-btn">&times;</span>
+                  </div>
+                </div>
+                <div class="lnotes-editor">
+                  <div class="lnotes-h">Sprint Planning Notes</div>
+                  <div class="lnotes-text">Discussed the auth migration timeline:</div>
+                  <div class="lnotes-li"><span class="lnotes-dot"></span>Move to JWT by March 15</div>
+                  <div class="lnotes-li"><span class="lnotes-dot"></span>Backend handles token refresh</div>
+                  <div class="lnotes-li"><span class="lnotes-dot"></span>Frontend needs new login flow</div>
+                  <div class="lnotes-spacer"></div>
+                  <div class="lnotes-task"><span class="lnotes-check done"></span><span class="lnotes-done">Set up staging env</span></div>
+                  <div class="lnotes-task"><span class="lnotes-check"></span>Write migration script</div>
+                  <div class="lnotes-task"><span class="lnotes-check"></span>Update API docs</div>
+                  <div class="lnotes-spacer"></div>
+                  <div class="lnotes-code"><span class="kw">const</span> <span class="var">token</span> = <span class="fn">jwt</span>.<span class="fn">sign</span>({ <span class="var">id</span> }, <span class="var">secret</span>);</div>
+                </div>
+                <div class="lnotes-drag-hint" id="lnotes-drag-hint">Drag to move</div>
+              </div>
+
+              <!-- Demo cursor (animated + changes shape) -->
+              <div class="demo-cursor hidden" id="demo-cursor">
+                <svg class="dcur-pointer" width="20" height="20" viewBox="0 0 24 24" fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.6))"><path d="M4 1L4 18L9 13L15 14Z"/></svg>
+                <svg class="dcur-text hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.6))"><line x1="12" y1="3" x2="12" y2="21"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+              </div>
+            </div>
+
+            <!-- Cursor status pill (shows inside laptop screen) -->
+            <div class="cursor-status hidden" id="cursor-status">
+              <span class="cursor-status-icon"></span>
+              <span class="cursor-status-text"></span>
+            </div>
+
+            <!-- Keyboard shortcut hint -->
+            <div class="kbd-pill hidden" id="kbd-pill">
+              <kbd>Cmd</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>N</kbd>
+            </div>
+
+            <!-- Blocked click indicator -->
+            <div class="blocked-indicator hidden" id="blocked-indicator">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eb5757" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              <span>Blocked &mdash; click-through is off</span>
+            </div>
+
+            <!-- macOS menu bar -->
+            <div class="laptop-menubar">
+              <span class="menubar-apple">&#63743;</span>
+              <span class="menubar-app">VS Code</span>
+              <span class="menubar-right">
+                <span>Wi-Fi</span>
+                <span>100%</span>
+                <span>Tue 3:42 PM</span>
+              </span>
+            </div>
+          </div>
+          <div class="laptop-base">
+            <div class="laptop-notch"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ KEYBOARD SHORTCUTS ═══════ -->
+  <section id="shortcuts">
+    <div class="section-inner">
+      <h2>Command your window</h2>
+      <p class="section-desc">Every action lives on your keyboard. Pick a shortcut to see it live.</p>
+
+      <div class="kb-layout">
+        <!-- Laptop (same style as try-it) -->
+        <div class="kb-laptop">
+          <div class="kb-laptop-screen">
+            <!-- macOS menu bar -->
+            <div class="laptop-menubar">
+              <span class="menubar-apple">&#63743;</span>
+              <span class="menubar-app">VS Code</span>
+              <span class="menubar-right">
+                <span>Wi-Fi</span>
+                <span>100%</span>
+                <span>Tue 3:42 PM</span>
+              </span>
+            </div>
+            <div class="kb-laptop-desktop" id="kb-desktop">
+              <!-- Background VS Code -->
+              <div class="lbg-app">
+                <div class="lbg-bar">
+                  <span class="dot-group"><span class="wdot red"></span><span class="wdot yellow"></span><span class="wdot green"></span></span>
+                  <span class="lbg-title">VS Code &mdash; server.js</span>
+                </div>
+                <div class="lbg-body">
+                  <div class="lbg-line"><span class="kw">import</span> <span class="var">express</span> <span class="kw">from</span> <span class="str">'express'</span>;</div>
+                  <div class="lbg-line"><span class="kw">import</span> { <span class="var">WebSocketServer</span> } <span class="kw">from</span> <span class="str">'ws'</span>;</div>
+                  <div class="lbg-line"></div>
+                  <div class="lbg-line"><span class="kw">const</span> <span class="var">app</span> = <span class="fn">express</span>();</div>
+                  <div class="lbg-line"><span class="kw">const</span> <span class="var">wss</span> = <span class="kw">new</span> <span class="fn">WebSocketServer</span>({ <span class="var">port</span>: <span class="num">1234</span> });</div>
+                  <div class="lbg-line"></div>
+                  <div class="lbg-line"><span class="var">wss</span>.<span class="fn">on</span>(<span class="str">'connection'</span>, (<span class="var">ws</span>) =&gt; {</div>
+                  <div class="lbg-line">&nbsp;&nbsp;<span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Client connected'</span>);</div>
+                  <div class="lbg-line">});</div>
+                </div>
+              </div>
+
+              <!-- InviNotes overlay window -->
+              <div class="lnotes kb-notes" id="kb-win">
+                <div class="lnotes-bar">
+                  <span class="lnotes-title">InviNotes</span>
+                  <div class="lnotes-right">
+                    <span class="lnotes-status"></span>
+                    <span class="lnotes-ct-badge hidden" id="kb-ct-badge">Click-through</span>
+                    <span class="lnotes-share">Share</span>
+                    <span class="lnotes-btn">&ndash;</span>
+                    <span class="lnotes-btn">&times;</span>
+                  </div>
+                </div>
+                <div class="lnotes-editor">
+                  <div class="lnotes-h">Sprint Planning Notes</div>
+                  <div class="lnotes-text">Discussed the auth migration timeline:</div>
+                  <div class="lnotes-li"><span class="lnotes-dot"></span>Move to JWT by March 15</div>
+                  <div class="lnotes-li"><span class="lnotes-dot"></span>Backend handles token refresh</div>
+                  <div class="lnotes-li"><span class="lnotes-dot"></span>Frontend needs new login flow</div>
+                  <div class="lnotes-spacer"></div>
+                  <div class="lnotes-task"><span class="lnotes-check done"></span><span class="lnotes-done">Set up staging env</span></div>
+                  <div class="lnotes-task"><span class="lnotes-check"></span>Write migration script</div>
+                  <div class="lnotes-task"><span class="lnotes-check"></span>Update API docs</div>
+                  <div class="lnotes-spacer"></div>
+                  <div class="lnotes-code"><span class="kw">const</span> <span class="var">token</span> = <span class="fn">jwt</span>.<span class="fn">sign</span>({ <span class="var">id</span> }, <span class="var">secret</span>);</div>
+                </div>
+              </div>
+
+              <!-- Action feedback label -->
+              <div class="kb-action-label" id="kb-action-label"></div>
+            </div>
+          </div>
+          <div class="laptop-base">
+            <div class="laptop-notch"></div>
+          </div>
+        </div>
+
+        <!-- Shortcut menu (right side) -->
+        <div class="kb-menu" id="kb-shortcuts">
+          <div class="kb-menu-title">Shortcuts</div>
+          <button class="kb-menu-item active" data-action="toggle">
+            <div class="kb-mi-left">
+              <svg class="kb-mi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span class="kb-mi-name">Show / Hide</span>
+            </div>
+            <div class="kb-mi-keys"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>N</kbd></div>
+          </button>
+          <button class="kb-menu-item" data-action="clickthrough">
+            <div class="kb-mi-left">
+              <svg class="kb-mi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 15l-2 5L9 9l11 4-5 2z"/><path d="M2 2l20 20"/></svg>
+              <span class="kb-mi-name">Click-through</span>
+            </div>
+            <div class="kb-mi-keys"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>M</kbd></div>
+          </button>
+          <button class="kb-menu-item" data-action="move">
+            <div class="kb-mi-left">
+              <svg class="kb-mi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+              <span class="kb-mi-name">Move</span>
+            </div>
+            <div class="kb-mi-keys"><kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>&#8592;&#8594;</kbd></div>
+          </button>
+          <button class="kb-menu-item" data-action="resize">
+            <div class="kb-mi-left">
+              <svg class="kb-mi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              <span class="kb-mi-name">Resize</span>
+            </div>
+            <div class="kb-mi-keys"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>+&minus;</kbd></div>
+          </button>
+          <button class="kb-menu-item" data-action="opacity">
+            <div class="kb-mi-left">
+              <svg class="kb-mi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" opacity="0.3"/></svg>
+              <span class="kb-mi-name">Opacity</span>
+            </div>
+            <div class="kb-mi-keys"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>[]</kbd></div>
+          </button>
+          <button class="kb-menu-item" data-action="snap">
+            <div class="kb-mi-left">
+              <svg class="kb-mi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="14" y="3" width="7" height="9" rx="1" fill="currentColor" opacity="0.25"/></svg>
+              <span class="kb-mi-name">Snap to Corner</span>
+            </div>
+            <div class="kb-mi-keys"><kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>&#8679;</kbd><kbd>&#8593;</kbd></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mac Keyboard (below laptop + menu) -->
+      <div class="kb-keyboard" id="kb-keyboard">
+        <!-- Row 1: Number row -->
+        <div class="kb-row">
+          <div class="kb-key kb-w-15" data-key="backtick">`</div>
+          <div class="kb-key" data-key="1">1</div>
+          <div class="kb-key" data-key="2">2</div>
+          <div class="kb-key" data-key="3">3</div>
+          <div class="kb-key" data-key="4">4</div>
+          <div class="kb-key" data-key="5">5</div>
+          <div class="kb-key" data-key="6">6</div>
+          <div class="kb-key" data-key="7">7</div>
+          <div class="kb-key" data-key="8">8</div>
+          <div class="kb-key" data-key="9">9</div>
+          <div class="kb-key" data-key="0">0</div>
+          <div class="kb-key" data-key="minus">&minus;</div>
+          <div class="kb-key" data-key="equal">=</div>
+          <div class="kb-key kb-w-20" data-key="delete">&#9003;</div>
+        </div>
+        <!-- Row 2: QWERTY -->
+        <div class="kb-row">
+          <div class="kb-key kb-w-20" data-key="tab">Tab</div>
+          <div class="kb-key" data-key="Q">Q</div>
+          <div class="kb-key" data-key="W">W</div>
+          <div class="kb-key" data-key="E">E</div>
+          <div class="kb-key" data-key="R">R</div>
+          <div class="kb-key" data-key="T">T</div>
+          <div class="kb-key" data-key="Y">Y</div>
+          <div class="kb-key" data-key="U">U</div>
+          <div class="kb-key" data-key="I">I</div>
+          <div class="kb-key" data-key="O">O</div>
+          <div class="kb-key" data-key="P">P</div>
+          <div class="kb-key" data-key="lbracket">[</div>
+          <div class="kb-key" data-key="rbracket">]</div>
+          <div class="kb-key kb-w-15" data-key="backslash">\</div>
+        </div>
+        <!-- Row 3: ASDF -->
+        <div class="kb-row">
+          <div class="kb-key kb-w-22" data-key="caps">Caps</div>
+          <div class="kb-key" data-key="A">A</div>
+          <div class="kb-key" data-key="S">S</div>
+          <div class="kb-key" data-key="D">D</div>
+          <div class="kb-key" data-key="F">F</div>
+          <div class="kb-key" data-key="G">G</div>
+          <div class="kb-key" data-key="H">H</div>
+          <div class="kb-key" data-key="J">J</div>
+          <div class="kb-key" data-key="K">K</div>
+          <div class="kb-key" data-key="L">L</div>
+          <div class="kb-key" data-key="semicolon">;</div>
+          <div class="kb-key" data-key="quote">'</div>
+          <div class="kb-key kb-w-22" data-key="return">Return</div>
+        </div>
+        <!-- Row 4: ZXCV -->
+        <div class="kb-row">
+          <div class="kb-key kb-w-28" data-key="lshift">&#8679; Shift</div>
+          <div class="kb-key" data-key="Z">Z</div>
+          <div class="kb-key" data-key="X">X</div>
+          <div class="kb-key" data-key="C">C</div>
+          <div class="kb-key" data-key="V">V</div>
+          <div class="kb-key" data-key="B">B</div>
+          <div class="kb-key" data-key="N">N</div>
+          <div class="kb-key" data-key="M">M</div>
+          <div class="kb-key" data-key="comma">,</div>
+          <div class="kb-key" data-key="period">.</div>
+          <div class="kb-key" data-key="slash">/</div>
+          <div class="kb-key kb-w-28" data-key="rshift">&#8679; Shift</div>
+        </div>
+        <!-- Row 5: Bottom row -->
+        <div class="kb-row">
+          <div class="kb-key kb-w-12" data-key="fn">fn</div>
+          <div class="kb-key kb-w-12" data-key="lctrl">&#8963;</div>
+          <div class="kb-key kb-w-12" data-key="lalt">&#8997;</div>
+          <div class="kb-key kb-w-16" data-key="lcmd">&#8984;</div>
+          <div class="kb-key kb-space" data-key="space"></div>
+          <div class="kb-key kb-w-16" data-key="rcmd">&#8984;</div>
+          <div class="kb-key kb-w-12" data-key="ralt">&#8997;</div>
+          <div class="kb-key kb-arrow-group">
+            <div class="kb-arrow-top">
+              <div class="kb-key kb-key-arrow" data-key="up">&#9650;</div>
+            </div>
+            <div class="kb-arrow-bottom">
+              <div class="kb-key kb-key-arrow" data-key="left">&#9664;</div>
+              <div class="kb-key kb-key-arrow" data-key="down">&#9660;</div>
+              <div class="kb-key kb-key-arrow" data-key="right">&#9654;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ FEATURES ═══════ -->
+  <section id="features">
+    <div class="section-inner">
+      <h2>Everything you need</h2>
+      <div class="features-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Invisible to Screen Share</h3>
+          <p>Uses OS-level <code>setContentProtection</code> to hide from Zoom, Meet, Teams, and OBS.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Real-time Collaboration</h3>
+          <p>Live cursors, presence indicators, and instant sync powered by Yjs CRDT.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3>Rich Text Editor</h3>
+          <p>Notion-style slash commands, headings, code blocks with syntax highlighting, task lists.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <h3>Deep Link Sharing</h3>
+          <p>Share <code>invinotes://join/...</code> links that open the app and join a room instantly.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="6" y="6" width="12" height="12" rx="1" opacity="0.5"/></svg>
+          </div>
+          <h3>Always on Top</h3>
+          <p>Stays above all windows. Adjust opacity or enable click-through to interact with apps behind it.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="3"/><path d="M6 10h1M10 10h4M17 10h1M6 14h12"/></svg>
+          </div>
+          <h3>Global Hotkeys</h3>
+          <p>Show/hide, move, resize, snap, and adjust opacity — all from the keyboard.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ HOW IT WORKS ═══════ -->
+  <section id="how-it-works">
+    <div class="section-inner">
+      <h2>How It Works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Create a Room</h3>
+          <p>Click Share &rarr; Create new room to start a collaboration session.</p>
+        </div>
+        <div class="step-line"></div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Share the Link</h3>
+          <p>Copy the invite link or room ID and send it to your collaborator.</p>
+        </div>
+        <div class="step-line"></div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Collaborate Invisibly</h3>
+          <p>Edit together in real time. Your notes are invisible to screen capture.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ DOWNLOAD CTA ═══════ -->
+  <section id="download">
+    <div class="section-inner">
+      <h2>Ready to go invisible?</h2>
+      <p class="section-desc">Download InviNotes and start collaborating without anyone on the call seeing your notes.</p>
+      <a href="https://github.com/nikhilc523/InviNotes/releases/latest/download/InviNotes-1.0.0-arm64.dmg" class="download-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for macOS
+      </a>
+      <a href="https://github.com/nikhilc523/InviNotes" class="github-link" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer>
+    <span>InviNotes &middot; Built with Electron &middot; ISC License</span>
+    <a href="https://github.com/nikhilc523/InviNotes" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12/dist/ScrollTrigger.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
